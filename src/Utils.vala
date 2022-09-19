@@ -77,14 +77,14 @@ namespace Terminal.Utils {
         var fragment_parts = remaining.split ("#", 2);
         remaining = fragment_parts[0];
         if (fragment_parts.length == 2) {
-            fragment = Uri.escape_string(fragment_parts[1], "/");
+            fragment = Uri.unescape_string(fragment_parts[1]);
         }
 
         string? query = null;
         var query_parts = remaining.split ("?", 2);
         remaining = query_parts[0];
         if (query_parts.length == 2) {
-            query = Uri.escape_string(query_parts[1], "&");
+            query = Uri.unescape_string(query_parts[1]);
         }
 
         string? username = null, password = null;
@@ -93,32 +93,39 @@ namespace Terminal.Utils {
             remaining = username_parts[1];
 
             var password_parts = username_parts[0].split(":", 2);
-            username = Uri.escape_string(password_parts[0]);
+            username = Uri.unescape_string(password_parts[0]);
             if (password_parts.length == 2) {
-                password = Uri.escape_string(password_parts[1]);
+                password = Uri.unescape_string(password_parts[1]);
             }
         }
 
-        string path = Uri.escape_string(remaining, "/");
-
-        string result = scheme + "://";
-
+        string path;
+        string? host = null;
+        int? port = null;
+        
+        if (remaining.length > 0 && remaining[0] == '/') {
+            path = Uri.unescape_string(remaining);
         if (username == null) {
-            result = result + path;
-        } else if (password == null) {
-            result = result + username + "@" + path;
         } else {
-            result = result + username + ":" + password + "@" + path;
+            var path_parts = remaining.split("/", 2);
+            remaining = Uri.unescape_string(path_parts[0]);
+            if (path_parts.length == 2) {
+                path = "/" + Uri.unescape_string(path_parts[1]);
+            } else {
+                path = "";
+            }
+
+            var host_parts = remaining.split(":", 2);
+            host = Uri.unescape_string(host_parts[0]);
+        }
+            if (host_parts.length == 2) {
+                port = int.parse(host_parts[1]);
+
+            }
         }
 
-        if (query != null) {
-            result = result + "?" + query;
-        }
-
-        if (fragment != null) {
-            result = result + "#" + fragment;
-        }
-
+        Uri joined = Uri.build_with_user(UriFlags.NONE, scheme, username, password, null /* auth_params */, host, port ?? -1, path, query, fragment);
+        string result = joined.to_string();
         return result;
     }
 
