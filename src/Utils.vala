@@ -62,71 +62,17 @@ namespace Terminal.Utils {
     }
 
     public string? sanitize_uri (string input) {
-        string remaining  = input;
-
-        string scheme; 
-        var parts_scheme = remaining.split ("://", 2);
-        if (parts_scheme.length == 2) {
-            scheme = parts_scheme[0];
-            remaining = parts_scheme[1];
-        } else {
-            scheme = "file";
-        }
-
-        string? fragment = null;
-        var fragment_parts = remaining.split ("#", 2);
-        remaining = fragment_parts[0];
-        if (fragment_parts.length == 2) {
-            fragment = Uri.unescape_string(fragment_parts[1]);
-        }
-
-        string? query = null;
-        var query_parts = remaining.split ("?", 2);
-        remaining = query_parts[0];
-        if (query_parts.length == 2) {
-            query = Uri.unescape_string(query_parts[1]);
-        }
-
-        string? username = null, password = null;
-        var username_parts = remaining.split("@", 2);
-        if (username_parts.length == 2) {
-            remaining = username_parts[1];
-
-            var password_parts = username_parts[0].split(":", 2);
-            username = Uri.unescape_string(password_parts[0]);
-            if (password_parts.length == 2) {
-                password = Uri.unescape_string(password_parts[1]);
+        try {
+            Uri? parsed = Uri.parse(input, UriFlags.PARSE_RELAXED);
+            if (parsed == null) {
+                return null;
             }
+            string result = parsed.to_string();
+            return result;
         }
-
-        string path;
-        string? host = null;
-        int? port = null;
-        
-        if (remaining.length > 0 && remaining[0] == '/') {
-            path = Uri.unescape_string(remaining);
-        if (username == null) {
-        } else {
-            var path_parts = remaining.split("/", 2);
-            remaining = Uri.unescape_string(path_parts[0]);
-            if (path_parts.length == 2) {
-                path = "/" + Uri.unescape_string(path_parts[1]);
-            } else {
-                path = "";
-            }
-
-            var host_parts = remaining.split(":", 2);
-            host = Uri.unescape_string(host_parts[0]);
+        catch (UriError e) {
+            return null;
         }
-            if (host_parts.length == 2) {
-                port = int.parse(host_parts[1]);
-
-            }
-        }
-
-        Uri joined = Uri.build_with_user(UriFlags.NONE, scheme, username, password, null /* auth_params */, host, port ?? -1, path, query, fragment);
-        string result = joined.to_string();
-        return result;
     }
 
     /*** Simplified version of PF.FileUtils function, with fewer checks ***/
