@@ -1397,7 +1397,7 @@ namespace Terminal {
 
         private void action_open_in_browser () {
             get_current_selection_link_or_pwd ((clipboard, uri) => {
-                string? to_open = Utils.sanitize_path (uri, current_terminal.get_shell_location ());
+                string? to_open = Utils.sanitize_uri(uri);
                 if (to_open != null) {
                     try {
                         Gtk.show_uri_on_window (null, to_open, Gtk.get_current_event_time ());

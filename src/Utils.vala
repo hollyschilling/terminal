@@ -61,6 +61,67 @@ namespace Terminal.Utils {
         return result;
     }
 
+    public string? sanitize_uri (string input) {
+        string remaining  = input;
+
+        string scheme; 
+        var parts_scheme = remaining.split ("://", 2);
+        if (parts_scheme.length == 2) {
+            scheme = parts_scheme[0];
+            remaining = parts_scheme[1];
+        } else {
+            scheme = "file";
+        }
+
+        string? fragment = null;
+        var fragment_parts = remaining.split ("#", 2);
+        remaining = fragment_parts[0];
+        if (fragment_parts.length == 2) {
+            fragment = Uri.escape_string(fragment_parts[1], "/");
+        }
+
+        string? query = null;
+        var query_parts = remaining.split ("?", 2);
+        remaining = query_parts[0];
+        if (query_parts.length == 2) {
+            query = Uri.escape_string(query_parts[1], "&");
+        }
+
+        string? username = null, password = null;
+        var username_parts = remaining.split("@", 2);
+        if (username_parts.length == 2) {
+            remaining = username_parts[1];
+
+            var password_parts = username_parts[0].split(":", 2);
+            username = Uri.escape_string(password_parts[0]);
+            if (password_parts.length == 2) {
+                password = Uri.escape_string(password_parts[1]);
+            }
+        }
+
+        string path = Uri.escape_string(remaining, "/");
+
+        string result = scheme + "://";
+
+        if (username == null) {
+            result = result + path;
+        } else if (password == null) {
+            result = result + username + "@" + path;
+        } else {
+            result = result + username + ":" + password + "@" + path;
+        }
+
+        if (query != null) {
+            result = result + "?" + query;
+        }
+
+        if (fragment != null) {
+            result = result + "#" + fragment;
+        }
+
+        return result;
+    }
+
     /*** Simplified version of PF.FileUtils function, with fewer checks ***/
     public string get_parent_path_from_path (string path) {
         if (path.length < 2) {
